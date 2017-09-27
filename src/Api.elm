@@ -2,7 +2,6 @@ module Api exposing (tasksGetRequest, tasksPostRequest)
 
 import Json.Decode as Decode
 import Json.Encode as Encode
--- import Json.Decode.Pipeline
 import Http exposing (..)
 
 import Actions exposing (..)

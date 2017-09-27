@@ -1,7 +1,7 @@
 module View exposing (view)
 
 import Html exposing (Html, button, div, text, input)
-import Html.Attributes exposing (placeholder, value, disabled)
+import Html.Attributes exposing (placeholder, value, disabled, class, style)
 import Html.Events exposing (onClick)
 
 import Actions exposing (..)
@@ -12,7 +12,7 @@ import Types exposing (..)
 view : State -> Html Action
 view state =
   div []
-    [ button [ disabled (tasksDirty state), onClick SaveTasks ] [ text "save" ]
+    [ button [ disabled (tasksDirty state), onClick SaveTasks ] [ text "Save" ]
     , button [ onClick AddTask ] [ text "add task" ]
     , div [] (List.map (\task -> taskView task) state.tasks)
     , alertView state.alert
