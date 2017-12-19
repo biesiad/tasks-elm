@@ -4,17 +4,18 @@ import Http exposing (..)
 
 
 type alias State =
-  { tasks: List Task
-  , serverTasks: List Task
-  , alert: Alert
-  }
+    { tasks : List Task
+    , serverTasks : List Task
+    , alert : Maybe Alert
+    }
+
 
 type alias Task =
-  { id : Int
-  , title : String
-  }
+    { id : Int
+    , title : String
+    }
 
-type alias Alert =
-  { text: String
-  , visible: Bool
-  }
+
+type Alert
+    = Success String
+    | Error String

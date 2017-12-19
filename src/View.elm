@@ -1,37 +1,45 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, text, input)
-import Html.Attributes exposing (placeholder, value, disabled, class, style)
-import Html.Events exposing (onClick)
-
 import Actions exposing (..)
-import Update exposing (..)
+import Html exposing (Html, button, div, input, text)
+import Html.Attributes exposing (class, disabled, placeholder, style, value)
+import Html.Events exposing (onClick, onInput)
 import Types exposing (..)
+import Update exposing (..)
 
 
 view : State -> Html Action
 view state =
-  div []
-    [ button [ disabled (tasksDirty state), onClick SaveTasks ] [ text "Save" ]
-    , button [ onClick AddTask ] [ text "add task" ]
-    , div [] (List.map (\task -> taskView task) state.tasks)
-    , alertView state.alert
-    ]
+    div []
+        [ button [ onClick AddTask ] [ text "add task" ]
+        , button [ disabled (tasksDirty state), onClick SaveTasks ] [ text "Save" ]
+        , div [] (List.map (\task -> taskView task) state.tasks)
+        , alertView state.alert
+        ]
+
 
 taskView : Task -> Html Action
 taskView task =
-  div []
-    [ input [ placeholder "Task name", value task.title] []
-    , button [ onClick (DeleteTask task) ] [ text "delete" ]
-    ]
-
-alertView : Alert -> Html Action
-alertView alert =
-  case alert.visible of
-    False ->
-      div [] []
-    True ->
-      div []
-        [ text alert.text
-        , button [ onClick CloseAlert ] [ text "x" ]
+    div []
+        [ input [ placeholder "Add title...", value task.title, onInput (UpdateTask task.id) ] []
+        , button [ onClick (DeleteTask task) ] [ text "delete" ]
         ]
+
+
+alertView : Maybe Alert -> Html Action
+alertView alert =
+    case alert of
+        Nothing ->
+            div [] []
+
+        Just (Success message) ->
+            div []
+                [ text message
+                , button [ onClick CloseAlert ] [ text "x" ]
+                ]
+
+        Just (Error message) ->
+            div []
+                [ text message
+                , button [ onClick CloseAlert ] [ text "x" ]
+                ]
