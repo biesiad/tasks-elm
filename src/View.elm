@@ -5,17 +5,21 @@ import Html exposing (Html, button, div, input, text)
 import Html.Attributes exposing (class, disabled, placeholder, style, value)
 import Html.Events exposing (onClick, onInput)
 import Types exposing (..)
-import Update exposing (..)
 
 
 view : State -> Html Action
 view state =
     div []
         [ button [ onClick AddTask ] [ text "add task" ]
-        , button [ disabled (tasksDirty state), onClick SaveTasks ] [ text "Save" ]
+        , button [ disabled (saveButtonDisabled state), onClick SaveTasks ] [ text "Save" ]
         , div [] (List.map (\task -> taskView task) state.tasks)
         , alertView state.alert
         ]
+
+
+saveButtonDisabled : State -> Bool
+saveButtonDisabled state =
+    state.tasks == state.serverTasks
 
 
 taskView : Task -> Html Action
@@ -28,18 +32,19 @@ taskView task =
 
 alertView : Maybe Alert -> Html Action
 alertView alert =
+    let
+        render cssClass message =
+            div []
+                [ text message
+                , button [ onClick CloseAlert ] [ text "x" ]
+                ]
+    in
     case alert of
         Nothing ->
             div [] []
 
         Just (Success message) ->
-            div []
-                [ text message
-                , button [ onClick CloseAlert ] [ text "x" ]
-                ]
+            render "success" message
 
         Just (Error message) ->
-            div []
-                [ text message
-                , button [ onClick CloseAlert ] [ text "x" ]
-                ]
+            render "error" message

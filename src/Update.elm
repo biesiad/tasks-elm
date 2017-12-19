@@ -9,27 +9,6 @@ import Types exposing (..)
 update : Action -> State -> ( State, Cmd Action )
 update action state =
     case action of
-        TasksGetRequest result ->
-            case result of
-                Ok tasks ->
-                    ( { state
-                        | tasks = Maybe.withDefault [] tasks
-                        , serverTasks = Maybe.withDefault [] tasks
-                      }
-                    , Cmd.none
-                    )
-
-                Err error ->
-                    state |> update (ShowAlert (requestErrorAlert error "Error loading tasks"))
-
-        TasksPostRequest result ->
-            case result of
-                Ok tasks ->
-                    { state | serverTasks = state.tasks } |> update (ShowAlert (Just (Success "Tasks saved Successfuly!")))
-
-                Err error ->
-                    ( { state | alert = requestErrorAlert error "Error saving tasks" }, Cmd.none )
-
         AddTask ->
             ( { state | tasks = newTask state.tasks :: state.tasks }, Cmd.none )
 
@@ -47,6 +26,28 @@ update action state =
 
         CloseAlert ->
             ( { state | alert = Nothing }, Cmd.none )
+
+        TasksGetRequest result ->
+            case result of
+                Ok tasks ->
+                    ( { state
+                        | tasks = Maybe.withDefault [] tasks
+                        , serverTasks = Maybe.withDefault [] tasks
+                      }
+                    , Cmd.none
+                    )
+
+                Err error ->
+                    state |> update (ShowAlert (requestErrorAlert error "Error loading tasks"))
+
+        TasksPostRequest result ->
+            case result of
+                Ok tasks ->
+                    { state | serverTasks = state.tasks }
+                        |> update (ShowAlert (Just (Success "Tasks saved Successfuly!")))
+
+                Err error ->
+                    ( { state | alert = requestErrorAlert error "Error saving tasks" }, Cmd.none )
 
 
 newTask : List Task -> Task
@@ -68,11 +69,6 @@ updateTask id title =
             else
                 t
         )
-
-
-tasksDirty : State -> Bool
-tasksDirty state =
-    state.tasks == state.serverTasks
 
 
 requestErrorAlert : Http.Error -> String -> Maybe Alert

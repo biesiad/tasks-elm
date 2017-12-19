@@ -1,7 +1,5 @@
 module Types exposing (..)
 
-import Http exposing (..)
-
 
 type alias State =
     { tasks : List Task
