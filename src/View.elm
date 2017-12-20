@@ -1,8 +1,8 @@
 module View exposing (view)
 
 import Actions exposing (..)
-import Html exposing (Html, button, div, input, text)
-import Html.Attributes exposing (class, disabled, placeholder, style, value)
+import Html exposing (Html, button, div, i, input, text)
+import Html.Attributes exposing (class, disabled, id, placeholder, style, value)
 import Html.Events exposing (onClick, onInput)
 import Types exposing (..)
 
@@ -10,41 +10,46 @@ import Types exposing (..)
 view : State -> Html Action
 view state =
     div []
-        [ button [ onClick AddTask ] [ text "add task" ]
-        , button [ disabled (saveButtonDisabled state), onClick SaveTasks ] [ text "Save" ]
-        , div [] (List.map (\task -> taskView task) state.tasks)
-        , alertView state.alert
+        [ div [ class "header" ] []
+        , div [ class "container" ]
+            [ div []
+                [ button [ class "button", onClick AddTask ] [ text "add task" ]
+                , button [ class "button", disabled (saveButtonDisabled state), onClick SaveTasks ] [ text "Save" ]
+                ]
+            , if state.isLoading && List.length state.tasks == 0 then
+                div [] [ text "Loading" ]
+              else
+                div [] (List.map taskView state.tasks)
+            , div [] (List.map alertView state.alerts)
+            ]
         ]
 
 
 saveButtonDisabled : State -> Bool
 saveButtonDisabled state =
-    state.tasks == state.serverTasks
+    state.tasks == state.serverTasks || state.isSaving
 
 
 taskView : Task -> Html Action
 taskView task =
-    div []
-        [ input [ placeholder "Add title...", value task.title, onInput (UpdateTask task.id) ] []
-        , button [ onClick (DeleteTask task) ] [ text "delete" ]
+    div [ class "task" ]
+        [ input [ class "task-input", id (toString task.id), placeholder "Add title...", value task.title, onInput (UpdateTask task.id) ] []
+        , i [ class "fa fa-trash", onClick (DeleteTask task) ] []
         ]
 
 
-alertView : Maybe Alert -> Html Action
+alertView : Alert -> Html Action
 alertView alert =
     let
         render cssClass message =
             div []
                 [ text message
-                , button [ onClick CloseAlert ] [ text "x" ]
+                , i [ class "fa fa-times", onClick (CloseAlert alert) ] []
                 ]
     in
-    case alert of
-        Nothing ->
-            div [] []
-
-        Just (Success message) ->
+    case alert.content of
+        Success message ->
             render "success" message
 
-        Just (Error message) ->
+        Error message ->
             render "error" message

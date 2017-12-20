@@ -4,7 +4,7 @@ module.exports = {
   entry: {
     app: [
       './public/index.js'
-    ]
+    ],
   },
 
   output: {

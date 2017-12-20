@@ -2,7 +2,12 @@ module Update exposing (..)
 
 import Actions exposing (..)
 import Api exposing (..)
+import Dom
 import Http exposing (..)
+import Process
+import Result
+import Task
+import Time
 import Types exposing (..)
 
 
@@ -10,7 +15,13 @@ update : Action -> State -> ( State, Cmd Action )
 update action state =
     case action of
         AddTask ->
-            ( { state | tasks = newTask state.tasks :: state.tasks }, Cmd.none )
+            let
+                new =
+                    newTask state.tasks
+            in
+            ( { state | tasks = new :: state.tasks }
+            , Task.attempt FocusResult (Dom.focus (toString new.id))
+            )
 
         UpdateTask id title ->
             ( { state | tasks = updateTask id title state.tasks }, Cmd.none )
@@ -19,13 +30,15 @@ update action state =
             ( { state | tasks = List.filter ((/=) task.id << .id) state.tasks }, Cmd.none )
 
         SaveTasks ->
-            ( state, tasksPostRequest state.tasks )
+            ( { state | isSaving = True }, tasksPostRequest state.tasks )
 
         ShowAlert alert ->
-            ( { state | alert = alert }, Cmd.none )
+            ( { state | alerts = alert :: state.alerts }
+            , Task.perform (\_ -> CloseAlert alert) (Process.sleep (3 * Time.second))
+            )
 
-        CloseAlert ->
-            ( { state | alert = Nothing }, Cmd.none )
+        CloseAlert alert ->
+            ( { state | alerts = List.filter ((/=) alert.id << .id) state.alerts }, Cmd.none )
 
         TasksGetRequest result ->
             case result of
@@ -33,21 +46,33 @@ update action state =
                     ( { state
                         | tasks = Maybe.withDefault [] tasks
                         , serverTasks = Maybe.withDefault [] tasks
+                        , isLoading = False
                       }
                     , Cmd.none
                     )
 
                 Err error ->
-                    state |> update (ShowAlert (requestErrorAlert error "Error loading tasks"))
+                    update
+                        (ShowAlert (newAlert state.alerts (Error (requestError error "Error loading tasks"))))
+                        { state | isLoading = False }
 
         TasksPostRequest result ->
             case result of
                 Ok tasks ->
-                    { state | serverTasks = state.tasks }
-                        |> update (ShowAlert (Just (Success "Tasks saved Successfuly!")))
+                    update
+                        (ShowAlert (newAlert state.alerts (Success "Tasks saved Successfuly!")))
+                        { state
+                            | serverTasks = state.tasks
+                            , isSaving = False
+                        }
 
                 Err error ->
-                    ( { state | alert = requestErrorAlert error "Error saving tasks" }, Cmd.none )
+                    update
+                        (ShowAlert (newAlert state.alerts (Error (requestError error "Error saving tasks"))))
+                        { state | isSaving = False }
+
+        FocusResult result ->
+            ( state, Cmd.none )
 
 
 newTask : List Task -> Task
@@ -55,37 +80,47 @@ newTask tasks =
     { id = newId tasks, title = "" }
 
 
-newId : List Task -> Int
-newId tasks =
-    Maybe.withDefault 0 (List.maximum (List.map .id tasks)) + 1
-
-
 updateTask : Int -> String -> List Task -> List Task
 updateTask id title =
-    List.map
-        (\t ->
-            if t.id == id then
-                { t | title = title }
+    let
+        update task =
+            if task.id == id then
+                { task | title = title }
             else
-                t
-        )
+                task
+    in
+    List.map update
 
 
-requestErrorAlert : Http.Error -> String -> Maybe Alert
-requestErrorAlert error text =
+newAlert : List Alert -> AlertContent -> Alert
+newAlert alerts content =
+    { id = newId alerts
+    , content = content
+    }
+
+
+requestError : Http.Error -> String -> String
+requestError error text =
     case error of
         BadPayload err response ->
-            Just (Types.Error (text ++ "(" ++ err ++ ")"))
+            text ++ "(" ++ err ++ ")"
 
         _ ->
-            Just (Types.Error text)
+            text
+
+
+newId : List { x | id : Int } -> Int
+newId l =
+    Maybe.withDefault 0 (List.maximum (List.map .id l)) + 1
 
 
 init : ( State, Cmd Action )
 init =
     ( { tasks = []
       , serverTasks = []
-      , alert = Nothing
+      , alerts = []
+      , isLoading = True
+      , isSaving = False
       }
     , tasksGetRequest
     )

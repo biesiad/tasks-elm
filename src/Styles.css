@@ -1,0 +1,49 @@
+* {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #fafafa;
+}
+
+
+.container {
+  width: 600px;
+  margin: 30px auto;
+}
+
+.header {
+  height: 50px;
+  background-color: #444;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px;
+  background-color: #37A;
+  border-radius: 10px;
+  border: 0;
+  color: #eee;
+}
+
+.button:disabled {
+  background-color: #377;
+  color: #eee;
+}
+
+.task {
+  width: 100%;
+  border-radius: 10px;
+
+  padding: 10px;
+  box-sizing: content-box;
+  }
+
+.task-input {
+  width: 100%;
+  border: 0;
+  padding: 3px;
+  background-color: #fafafa;;
+}
