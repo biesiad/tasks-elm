@@ -34,7 +34,7 @@ update action state =
 
         ShowAlert alert ->
             ( { state | alerts = alert :: state.alerts }
-            , Task.perform (\_ -> CloseAlert alert) (Process.sleep (3 * Time.second))
+            , Task.perform (\_ -> CloseAlert alert) (Process.sleep (5 * Time.second))
             )
 
         CloseAlert alert ->
