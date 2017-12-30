@@ -15,8 +15,8 @@ view state =
             [ div [ class "subheader" ]
                 [ h1 [] [ text "Tasks" ]
                 , div [ class "subheader-buttons" ]
-                    [ button [ class "button", onClick AddTask ] [ text "Add task" ]
-                    , button [ class "button", disabled (saveButtonDisabled state), onClick SaveTasks ] [ text "Save" ]
+                    [ button [ class "button", disabled state.isLoading, onClick AddTask ] [ text "Add task" ]
+                    , button [ class "button button-primary", disabled (saveButtonDisabled state), onClick SaveTasks ] [ text "Save" ]
                     ]
                 ]
             , if state.isLoading && List.length state.tasks == 0 then
@@ -30,7 +30,7 @@ view state =
 
 saveButtonDisabled : State -> Bool
 saveButtonDisabled state =
-    state.tasks == state.serverTasks || state.isSaving
+    state.isLoading || state.isSaving || (state.tasks == state.serverTasks)
 
 
 taskView : Task -> Html Action
