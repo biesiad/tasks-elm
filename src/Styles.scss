@@ -27,7 +27,7 @@ body {
 .button {
   display: inline-block;
   padding: 12px 14px;
-  background-color: $primary;
+  background-color: $secondary;
   border-radius: 5px;
   border: 0;
   color: $off-white;
@@ -36,8 +36,16 @@ body {
 }
 
 .button:disabled {
-  background-color: $secondary;
+  background-color: lighten($secondary, 20%);
+}
+
+.button-primary {
+  background-color: $primary;
   color: $off-white;
+}
+
+.button-primary:disabled {
+  background-color: lighten($primary, 20%);
 }
 
 
@@ -83,6 +91,7 @@ body {
   float: right;
 }
 
+
 .alerts {
   position: fixed;
   bottom: 100px;
@@ -93,10 +102,9 @@ body {
   border-radius: 5px;
   border: 1px solid;
   margin-bottom: 10px;
-  padding: 15px 20px;
+  padding: 18px 20px 16px;
   width: 400px;
 }
-
 
 .alert-success {
   color: $success;
@@ -116,9 +124,8 @@ body {
 }
 
 .loader {
-  width: 100%;
+  width: 100% !important;
   display: block;
-  text-align: center;
-  margin-top: 200px;
+  margin-top: 150px;
   color: $white;
 }
