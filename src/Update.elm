@@ -2,7 +2,7 @@ module Update exposing (..)
 
 import Actions exposing (..)
 import Api exposing (..)
-import Dom
+import Date
 import Http exposing (..)
 import Process
 import Result
@@ -15,13 +15,7 @@ update : Action -> State -> ( State, Cmd Action )
 update action state =
     case action of
         AddTask ->
-            let
-                new =
-                    newTask state.tasks
-            in
-            ( { state | tasks = new :: state.tasks }
-            , Task.attempt FocusResult (Dom.focus (toString new.id))
-            )
+            ( state, Task.perform (\date -> CreateTask (Date.millisecond date)) Date.now )
 
         UpdateTask id title ->
             ( { state | tasks = updateTask id title state.tasks }, Cmd.none )
@@ -32,7 +26,11 @@ update action state =
         SaveTasks ->
             ( { state | isSaving = True }, tasksPostRequest state.tasks )
 
-        ShowAlert alert ->
+        AddAlert content date ->
+            let
+                alert =
+                    { id = Date.millisecond date, content = content }
+            in
             ( { state | alerts = alert :: state.alerts }
             , Task.perform (\_ -> CloseAlert alert) (Process.sleep (5 * Time.second))
             )
@@ -52,32 +50,28 @@ update action state =
                     )
 
                 Err error ->
-                    update
-                        (ShowAlert (newAlert state.alerts (Error (requestError error "Error loading tasks"))))
-                        { state | isLoading = False }
+                    ( { state | isLoading = False }
+                    , Task.perform (AddAlert (Error (requestError error "Error loading tasks"))) Date.now
+                    )
 
         TasksPostRequest result ->
             case result of
                 Ok tasks ->
-                    update
-                        (ShowAlert (newAlert state.alerts (Success "Tasks saved Successfuly!")))
-                        { state
-                            | serverTasks = state.tasks
-                            , isSaving = False
-                        }
+                    ( { state
+                        | serverTasks = state.tasks
+                        , isSaving = False
+                      }
+                    , Task.perform (AddAlert (Success "Tasks saved Successfuly!")) Date.now
+                    )
 
                 Err error ->
-                    update
-                        (ShowAlert (newAlert state.alerts (Error (requestError error "Error saving tasks"))))
-                        { state | isSaving = False }
+                    ( { state | isSaving = False }, Task.perform (AddAlert (Error (requestError error "Error saving tasks"))) Date.now )
 
         FocusResult result ->
             ( state, Cmd.none )
 
-
-newTask : List Task -> Task
-newTask tasks =
-    { id = newId tasks, title = "" }
+        CreateTask id ->
+            ( { state | tasks = { id = id, title = "" } :: state.tasks }, Cmd.none )
 
 
 updateTask : Int -> String -> List Task -> List Task
@@ -92,13 +86,6 @@ updateTask id title =
     List.map update
 
 
-newAlert : List Alert -> AlertContent -> Alert
-newAlert alerts content =
-    { id = newId alerts
-    , content = content
-    }
-
-
 requestError : Http.Error -> String -> String
 requestError error text =
     case error of
@@ -107,11 +94,6 @@ requestError error text =
 
         _ ->
             text
-
-
-newId : List { x | id : Int } -> Int
-newId l =
-    Maybe.withDefault 0 (List.maximum (List.map .id l)) + 1
 
 
 init : ( State, Cmd Action )
